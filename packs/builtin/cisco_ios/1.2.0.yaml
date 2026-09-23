@@ -26,11 +26,11 @@
 
 vendor: cisco
 os_family: ios
-pack_version: 1.1.0
-parent_version: 1.0.0
-status: deprecated
+pack_version: 1.2.0
+parent_version: 1.1.0
+status: active
 created_by: team-atlantis
-checksum: sha256:bb7c709e62ddc62ee8aeb4dcb97ed4d057b940716f36a6cb83e6323a1db17e25
+checksum: sha256:c0229106141eba36f47f30866f155a05ee19b2cece05de3f73f2ff74830a1833
 
 comment_prefixes: ['!']
 
@@ -63,6 +63,44 @@ identity:
     match:   { type: regex, pattern: '^! model (\S+)' }
     capture: { value: '$1', cast: str }
     examples: ['! model ISR4331']
+
+
+# ---------------------------------------------------------------------------
+# Structure extraction (P16, ADR 0027)
+#
+# The regexes locate STRUCTURE -- where an interface opens, where a list opens,
+# where a list is bound. They do not describe entry grammar: turning
+# `0.0.0.255` into `/24` is arithmetic on a wildcard mask, not matching, so the
+# entries are read by the named dialect in api/parse/structures.py.
+#
+# Every example below appears verbatim in a DEVELOPMENT configuration.
+# `applied` carries no example: no Cisco development file binds a list to an
+# interface, so the regex is declared and unexercised, and it says so here
+# rather than in a commit message.
+# ---------------------------------------------------------------------------
+interface_extraction:
+  block: '^interface (\S+)$'
+  description: '^description (.+)$'
+  ip_address: '^ip address (\S+) (\S+)$'
+  shutdown: '^shutdown$'
+  no_shutdown: '^no shutdown$'
+  examples:
+    - 'interface GigabitEthernet0/0'
+    - 'description WAN-UPLINK-TO-ISP'
+    - 'ip address 203.0.113.2 255.255.255.252'
+    - 'no shutdown'
+
+acl_extraction:
+  dialect: ios_wildcard
+  acl_type: extended
+  named_block: '^ip access-list extended (\S+)$'
+  applied: '^ip access-group (\S+) (in|out)$'
+  remark: '^remark (.*)$'
+  examples:
+    - 'ip access-list extended EDGE-IN'
+    - 'permit tcp any any established'
+    - 'permit tcp 198.51.100.0 0.0.0.255 any eq 22'
+    - 'deny   ip any any log'
 
 patterns:
 
