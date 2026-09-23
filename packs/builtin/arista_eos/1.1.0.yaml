@@ -39,11 +39,11 @@
 
 vendor: arista
 os_family: eos
-pack_version: 1.0.1
+pack_version: 1.1.0
 parent_version: 1.0.0
-status: deprecated
+status: active
 created_by: team-atlantis
-checksum: sha256:e7fc1d5f4dbed86f95e3c847b929c91263df7aa06682d31a852eeff351e9b576
+checksum: sha256:32fd0c69143cbcda3a8d4c2e8fa0cf48d9b727c29f0ecb69dd424f4c1b5f4d10
 
 comment_prefixes: ['!']
 
@@ -63,5 +63,32 @@ identity:
     match:   { type: regex, pattern: '^! device: \S+ \([^,]+, EOS-(\S+)\)' }
     capture: { value: '$1', cast: str }
     examples: ['! device: sw-leaf-01 (DCS-7050SX3-48YC8, EOS-4.29.2F)']
+  # The hardware model, from the same header line EOS writes at the top of
+  # `show running-config`. It is a COMMENT, and reading it is deliberate:
+  # ADR 0011 keeps identity extraction on the raw line list precisely because
+  # platform metadata legitimately lives in comments while active security
+  # configuration never does. This line is the clearest example of that -- the
+  # device emits it, every Arista file in the corpus carries it, and no
+  # canonical security field is read from it.
+  - field: model
+    match:   { type: regex, pattern: '^! device: \S+ \(([^,]+), EOS-\S+\)' }
+    capture: { value: '$1', cast: str }
+    examples:
+      - '! device: sw-leaf-01 (DCS-7050SX3-48YC8, EOS-4.29.2F)'
+      - '! device: sw-spine-01 (DCS-7280CR3-32P4, EOS-4.30.1F)'
+
+# NO `serial` PATTERN, and this is a finding rather than an omission.
+# Not one running-config in this corpus carries a serial number, on any of the
+# four platforms. A serial is inventory data: it appears in `show version` and
+# `show inventory`, not in a configuration export. Declaring a pattern for it
+# would put a regex in this pack that no device could ever satisfy, which is
+# what CLAUDE.md warns against -- a field that looks supported while producing
+# UNKNOWN forever. DeviceIdentity.serial therefore stays UNKNOWN, honestly.
+#
+# VERSION NUMBERING. This is 1.1.0 rather than 1.0.2 because a TRAINED
+# arista/eos 1.0.2 exists in packs/archive/. Two different packs sharing one
+# (platform, version) would make `audit_run.pack_versions` ambiguous forever --
+# a stored finding citing "arista 1.0.2" could mean either. The archive is not
+# only insurance; it reserves the version numbers it holds.
 
 patterns: []

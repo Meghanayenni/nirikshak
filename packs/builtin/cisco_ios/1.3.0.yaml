@@ -26,11 +26,11 @@
 
 vendor: cisco
 os_family: ios
-pack_version: 1.2.0
+pack_version: 1.3.0
 parent_version: 1.1.0
-status: deprecated
+status: active
 created_by: team-atlantis
-checksum: sha256:718ba5741f7a16f665c3e21c3d296863e616cfaf69efc9a06a30db1db1186e1e
+checksum: sha256:9ef22bb87184408285bceccf8e3b47a918142765f4e1f6687152c914b662847a
 
 comment_prefixes: ['!']
 
@@ -59,10 +59,23 @@ identity:
     match:   { type: regex, pattern: '^version (\S+)' }
     capture: { value: '$1', cast: str }
     examples: ['version 17.9']
-  - field: model
-    match:   { type: regex, pattern: '^! model (\S+)' }
-    capture: { value: '$1', cast: str }
-    examples: ['! model ISR4331']
+  # NO `model` PATTERN. 1.2.0 and earlier read `^! model (\S+)`, whose only
+  # evidence anywhere is one line in one corpus file. Cisco's
+  # `show running-config` does not emit the hardware model -- it is in
+  # `show version` and `show inventory` -- so that pattern matched an
+  # annotation a corpus author wrote, and reported it as observed device
+  # identity with a citation. Removed rather than kept behind a flag: a field
+  # that resolves on exactly one synthetic file and no real one looks supported
+  # while being UNKNOWN everywhere that matters.
+  #
+  # This narrows ADR 0011's asymmetry in practice without reversing it. Platform
+  # metadata really does live in comments -- `arista/eos` reads its model from
+  # the `! device:` header EOS itself writes. The distinction is whether the
+  # PLATFORM emits the line, and nothing here can check that; it needs vendor
+  # documentation (SOURCING_BACKLOG gap 2).
+  #
+  # NO `serial` PATTERN either, for the reason given in the arista pack: no
+  # running-config in this corpus carries one, on any platform.
 
 
 # ---------------------------------------------------------------------------
